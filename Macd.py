@@ -48,7 +48,7 @@ class Macd(Backtest):
         ax2 = plt.subplot2grid((16, 1), (6, 0), rowspan=3, colspan=1)
         ax3 = plt.subplot2grid((16, 1), (10, 0), rowspan=5, colspan=1)
 
-        ax1.plot(prices)
+        ax1.plot(prices, linewidth=1.5)
         ax2.plot(macd, color='blue', linewidth=1.5, label='MACD')
         ax2.plot(signal, color='orange', linewidth=1.5, label='Signal')
         ax3.plot(self.portfolio, color='black', linewidth=1.5, label='Cash')

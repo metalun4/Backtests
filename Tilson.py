@@ -31,7 +31,9 @@ class Tilson(Backtest):
     def get_tilson_data(self, length, vol_fac):
         hist = self.data
         t3 = pd.DataFrame(self.get_tilson(length, vol_fac)).rename(columns={0: 'T3'})
-        return pd.concat([t3, hist], join='inner', axis=1)
+        t3_last = t3.shift(periods=1, axis=0, fill_value=0).rename(columns={'T3': 'T3_Last'})
+        t3_prev = t3.shift(periods=2, axis=0, fill_value=0).rename(columns={'T3': 'T3_Prev'})
+        return pd.concat([t3, t3_last, t3_prev, hist], join='inner', axis=1)
 
     def calculate_portfolio(self):
         hist = self.t3data
@@ -39,18 +41,16 @@ class Tilson(Backtest):
         return cashDf
 
     def manage_position(self, x):
-        if x[4] > x[0]:
+        if x[1] > x[2]:
             if self.cash > 0:
-                self.asset = float(self.cash / x[5])
+                self.asset = float(self.cash / x[6])
                 self.cash = 0
-                print(f'Bought: {self.asset} for {self.asset * x[5]}$')
-            return float(self.cash + self.asset * x[5])
-        else:
+        elif x[1] < x[2]:
             if self.cash == 0:
-                self.cash = float(self.asset * x[5])
-                print(f'Sold: {self.asset} for {self.cash}$')
+                self.cash = float(self.asset * x[6])
                 self.asset = 0
-            return float(self.cash + self.asset)
+
+        return float(self.cash + self.asset * x[6])
 
     def plot_tilson(self):
         hist = self.t3data
