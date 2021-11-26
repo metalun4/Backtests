@@ -12,3 +12,4 @@ class Backtest:
         self.asset = initial_asset
         self.data = get_data(ticker, period, interval)
         self._open = 0
+        self.entry = 0

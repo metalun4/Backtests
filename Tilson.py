@@ -42,13 +42,22 @@ class Tilson(Backtest):
 
     def manage_position(self, x):
         if x[1] > x[2]:
-            if self.cash > 0:
+            if not self._open:
                 self.asset = float(self.cash / x[6])
+                self.entry = float(self.asset * x[6])
                 self.cash = 0
+                self._open = True
         elif x[1] < x[2]:
-            if self.cash == 0:
+            if self._open:
                 self.cash = float(self.asset * x[6])
                 self.asset = 0
+                self._open = False
+
+        # if float(self.asset * x[6]) <= (85/100)*self.entry:
+        #     if self.cash == 0:
+        #         self.cash = float(self.asset * x[6])
+        #         self.asset = 0
+        #         self._open = False
 
         return float(self.cash + self.asset * x[6])
 
