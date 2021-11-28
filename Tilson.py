@@ -13,7 +13,7 @@ class Tilson(Backtest):
         self.portfolio = self.calculate_portfolio()
 
     def get_tilson(self, length, vol_fac):
-        price = (self.data['High'] + self.data['Low'] + 2 * self.data['Close']) / 4
+        price = (self.data['High'] + self.data['Low'] + self.data['Close']) / 3
         exp1 = price.ewm(span=length, adjust=False).mean()
         exp2 = exp1.ewm(span=length, adjust=False).mean()
         exp3 = exp2.ewm(span=length, adjust=False).mean()
