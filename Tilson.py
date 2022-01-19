@@ -9,7 +9,7 @@ plt.style.use('fivethirtyeight')
 class Tilson(Backtest):
     def __init__(self, initial_deposit: float, initial_asset: float, ticker: str, period: str, interval: str, length: int, vol_fac: float):
         super().__init__(initial_deposit, initial_asset, ticker, period, interval)
-        self.t3data = self.get_tilson_data(length, vol_fac)
+        self.sdata = self.get_tilson_data(length, vol_fac)
         self.portfolio = self.calculate_portfolio()
 
     def get_tilson(self, length, vol_fac):
@@ -33,36 +33,48 @@ class Tilson(Backtest):
         t3 = pd.DataFrame(self.get_tilson(length, vol_fac)).rename(columns={0: 'T3'})
         t3_last = t3.shift(periods=1, axis=0, fill_value=0).rename(columns={'T3': 'T3_Last'})
         t3_prev = t3.shift(periods=2, axis=0, fill_value=0).rename(columns={'T3': 'T3_Prev'})
-        return pd.concat([t3, t3_last, t3_prev, hist], join='inner', axis=1)
+        t3_pprev = t3.shift(periods=3, axis=0, fill_value=0).rename(columns={'T3': 'T3_PPrev'})
+        return pd.concat([t3, t3_last, t3_prev, t3_pprev, hist], join='inner', axis=1)
 
     def calculate_portfolio(self):
-        hist = self.t3data
+        hist = self.sdata
         cashDf = hist.apply(self.manage_position, raw=False, axis=1)
         return cashDf
 
     def manage_position(self, x):
-        if x[1] > x[2]:
+        if x[1] > x[2] and x[2] < x[3]:
             if not self._open:
-                self.asset = float(self.cash / x[6])
-                self.entry = float(self.asset * x[6])
+                self.asset = float(self.cash / x[7])
+                self.entry = float(self.asset * x[7])
                 self.cash = 0
                 self._open = True
-        elif x[1] < x[2]:
+        elif x[1] < x[2] and x[2] > x[3]:
             if self._open:
-                self.cash = float(self.asset * x[6])
+                self.cash = float(self.asset * x[7])
                 self.asset = 0
                 self._open = False
 
         # if float(self.asset * x[6]) <= (85/100)*self.entry:
         #     if self.cash == 0:
-        #         self.cash = float(self.asset * x[6])
+        #         self.cash = float(self.asset * x[7])
         #         self.asset = 0
         #         self._open = False
 
-        return float(self.cash + self.asset * x[6])
+        return float(self.cash + self.asset * x[7])
 
-    def plot_tilson(self):
-        hist = self.t3data
+    def manage_oc(self, x):
+        if x[1] > x[2] and x[2] < x[3]:
+            self._open = True
+        elif x[1] < x[2] and x[2] > x[3]:
+            self._open = False
+
+        return self._open
+
+    def get_tilson_oc(self):
+        return self.sdata.apply(self.manage_oc, raw=False, axis=1)
+
+    def plot_strat(self):
+        hist = self.sdata
         prices = hist['Close']
 
         ax1 = plt.subplot2grid((11, 1), (0, 0), rowspan=5, colspan=1)

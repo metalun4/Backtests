@@ -9,7 +9,7 @@ plt.style.use('fivethirtyeight')
 class Macd(Backtest):
     def __init__(self, initial_deposit: float, initial_asset: float, ticker: str, period: str, interval: str, fast: int, slow: int, smooth: int):
         super().__init__(initial_deposit, initial_asset, ticker, period, interval)
-        self.mcdata = self.get_macd(fast, slow, smooth)
+        self.sdata = self.get_macd(fast, slow, smooth)
         self.portfolio = self.calculate_portfolio()
 
     def get_macd(self, fast, slow, smooth):
@@ -22,7 +22,7 @@ class Macd(Backtest):
         return pd.concat([macd, signal, self.data], join='inner', axis=1)
 
     def calculate_portfolio(self):
-        hist = self.mcdata
+        hist = self.sdata
         cashDf = hist.apply(self.manage_position, raw=False, axis=1)
         return cashDf
 
@@ -38,8 +38,8 @@ class Macd(Backtest):
                 self.asset = 0
             return float(self.cash + self.asset)
 
-    def plot_macd(self):
-        hist = self.mcdata
+    def plot_strat(self):
+        hist = self.sdata
         prices = hist['Close']
         macd = hist['MACD']
         signal = hist['Signal']

@@ -10,7 +10,7 @@ plt.style.use('fivethirtyeight')
 class Wtlb(Backtest):
     def __init__(self, initial_deposit: float, initial_asset: float, ticker: str, period: str, interval: str, clength: int, alength: int):
         super().__init__(initial_deposit, initial_asset, ticker, period, interval)
-        self.wtlbdata = self.get_wtlb(clength, alength)
+        self.sdata = self.get_wtlb(clength, alength)
         self.portfolio = self.calculate_portfolio()
 
     def get_wtlb(self, clength, alength):
@@ -27,18 +27,18 @@ class Wtlb(Backtest):
         return pd.concat([wt1, wt2, self.data], join='inner', axis=1)
 
     def calculate_portfolio(self):
-        hist = self.wtlbdata
+        hist = self.sdata
         cashDf = hist.apply(self.manage_position, raw=False, axis=1)
         return cashDf
 
     def manage_position(self, x):
-        if x[1] < x[0] < -53:
+        if x[0] < -60:
             if not self._open:
                 self.asset = float(self.cash / x[6])
                 self.entry = float(self.asset * x[6])
                 self.cash = 0
                 self._open = True
-        elif x[1] > x[0] > 53:
+        elif 60 < x[0] < x[1]:
             if self._open:
                 self.cash = float(self.asset * x[6])
                 self.asset = 0
@@ -52,8 +52,19 @@ class Wtlb(Backtest):
 
         return float(self.cash + self.asset * x[6])
 
-    def plot_wtlb(self):
-        prices = self.wtlbdata['Close']
+    def manage_oc(self, x):
+        if -60 > x[0]:
+            self._open = True
+        elif 60 < x[0] < x[1]:
+            self._open = False
+
+        return self._open
+
+    def get_wtlb_oc(self):
+        return self.sdata.apply(self.manage_oc, raw=False, axis=1)
+
+    def plot_strat(self):
+        prices = self.sdata['Close']
 
         ax1 = plt.subplot2grid((11, 1), (0, 0), rowspan=5, colspan=1)
         ax2 = plt.subplot2grid((11, 1), (6, 0), rowspan=5, colspan=1)
